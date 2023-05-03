@@ -26,8 +26,12 @@ type State = {
     loginErrorMessage: string | null;
 };
 
-export default class LoginScreen extends React.Component<{}, State> {
-    constructor(props: {} | Readonly<{}>) {
+type Props = {
+    navigation: any; // NOTE: use NavigationProp type if available
+};
+
+export default class LoginScreen extends React.Component<Props, State> {
+    constructor(props: Props) {
         super(props);
         this.state = {
             usernameValue: '',
@@ -105,12 +109,103 @@ export default class LoginScreen extends React.Component<{}, State> {
 
 
     onClickNavigate(routeName: string) {
-        const navigateAction = NavigationActions.navigate({
-            routeName: routeName,
-            params: { username: this.state.username },
+        const navigateAction = CommonActions.navigate({
+            name: routeName,
+            params: { username: this.state.usernameValue },
         });
         this.props.navigation.dispatch(navigateAction);
     }
 
-
+    render() {
+        return (
+            <KeyboardAvoidingView style={styles.container} behavior="padding" enabled>
+                <View style={styles.logocontainer}>
+                    <Image source={require('../../images/MMP.png')} style={styles.logo} />
+                </View>
+                <View style={styles.loginform}>
+                    <TextInput underlineColorAndroid='transparent' defaultValue={this.state.usernameValue.toString().toLocaleLowerCase()} placeholder='Username' style={styles.textinput} autoCapitalize='none' onChangeText={this.changeusernameValue} />
+                    <TextInput underlineColorAndroid='transparent' defaultValue={this.state.passwordValue} placeholder='Password' secureTextEntry={true} autoCapitalize='none' style={styles.textinput} onChangeText={this.changepasswordValue} />
+                    <TouchableOpacity style={styles.loginbtn} onPress={this.onLoginPressButton}>
+                        <Text style={styles.infotext}>Login</Text>
+                    </TouchableOpacity>
+                    <Text style={{ fontSize: 16 }}>New to MMP? <Text onPress={() => this.onClickNavigate('SignupScreen')} style={{ color: '#00f' }}>Sign up now</Text>.</Text>
+                    <ActivityIndicator size="large" color="darkorange" style={{ opacity: this.state.loggingIn ? 1.0 : 0.0, marginTop: 10 }} animating={true} />
+                    <Text style={{ color: 'red', fontWeight: 'bold', opacity: this.state.loginError ? 1.0 : 0.0 }}>
+                        Login error:
+                    </Text>
+                    <Text style={{ color: 'red', opacity: this.state.loginErrorMessage != null ? 1.0 : 0.0 }}>
+                        {this.state.loginErrorMessage}
+                    </Text>
+                </View>
+            </KeyboardAvoidingView>
+        );
+    }
 }
+
+const styles = StyleSheet.create({
+    infotext: {
+        fontSize: 20,
+        color: 'white'
+    },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignSelf: 'stretch',
+        width: undefined,
+        padding: 20,
+        backgroundColor: 'white',
+    },
+    horizontal: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        padding: 10
+    },
+    logocontainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    logo: {
+        flex: 1,
+        width: 300,
+        height: 150,
+        resizeMode: 'contain'
+    },
+    loginform: {
+        flex: 2,
+    },
+    loginformcontainer: {
+        alignItems: 'center',
+    },
+    textinput: {
+        color: 'white',
+        alignSelf: 'stretch',
+        padding: 12,
+        marginBottom: 10,
+        backgroundColor: 'orange',
+        borderColor: 'grey',
+        borderWidth: 0.8,
+        fontSize: 20,
+        borderRadius: 3,
+    },
+    switch: {
+        padding: 12,
+        marginBottom: 30,
+        borderColor: '#fff',
+        borderWidth: 0.6,
+    },
+    text: {
+        fontSize: 20,
+    },
+    loginbtn: {
+        backgroundColor: 'darkorange',
+        alignSelf: 'stretch',
+        alignItems: 'center',
+        padding: 14,
+        marginTop: 10,
+        borderColor: 'grey',
+        borderWidth: 0.8,
+        borderRadius: 10,
+        marginBottom: 15,
+    },
+});
