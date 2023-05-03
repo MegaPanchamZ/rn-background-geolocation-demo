@@ -270,7 +270,7 @@ export default class SimpleMap extends React.Component<Props, State> {
                             body: JSON.stringify({
                                 username: mmp_username,
                                 password: mmp_password,
-                                device_id: DeviceInfo.getUniqueID()
+                                device_id: DeviceInfo.getUniqueId()
                             }),
                         })
                             .then((response) => response.json())
@@ -291,7 +291,7 @@ export default class SimpleMap extends React.Component<Props, State> {
             });
     }
 
-    onClickNavigate(routeName) {
+    onClickNavigate(routeName: string) {
         const navigateAction = NavigationActions.navigate({
             routeName: routeName,
             params: { username: this.state.username },
@@ -324,7 +324,7 @@ export default class SimpleMap extends React.Component<Props, State> {
     /**
     * @event motionchange
     */
-    onMotionChange(event) {
+    onMotionChange(event: { isMoving: any; location: any; }) {
         this.setState({
             isMoving: event.isMoving
         });
@@ -333,7 +333,7 @@ export default class SimpleMap extends React.Component<Props, State> {
     /**
     * @event activitychange
     */
-    onActivityChange(event) {
+    onActivityChange(event: any) {
         this.setState({
             motionActivity: event
         });
@@ -341,22 +341,22 @@ export default class SimpleMap extends React.Component<Props, State> {
     /**
     * @event providerchange
     */
-    onProviderChange(event) {
+    onProviderChange(event: any) {
     }
     /**
     * @event powersavechange
     */
-    onPowerSaveChange(isPowerSaveMode) {
+    onPowerSaveChange(isPowerSaveMode: any) {
     }
 
-    onEnteredPOI(newPOIName) {
+    onEnteredPOI(newPOIName: string) {
         AsyncStorage.getItem('@mmp:POIs', (err, item) => this.addPOIToStorage(item, this.state.lastKnownLocation, newPOIName));
         let markers = this.state.markers;
         markers.push({ label: newPOIName, coordinate: this.state.lastKnownLocation.coords });
         this.setState({ markers: markers });
     }
 
-    addPOIToStorage(existingPOIsString, newPOIPosition, newPOIName) {
+    addPOIToStorage(existingPOIsString: string | any[] | null | undefined, newPOIPosition: { coords: { latitude: { toString: () => string; }; longitude: { toString: () => string; }; }; }, newPOIName: string) {
         var timestampFormatted = '2000-01-01 00:00:00';
         if (existingPOIsString == null || existingPOIsString.length == 0 || existingPOIsString == 'null')
             existingPOIsString = '';
@@ -384,7 +384,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         );
     }
 
-    onStartTracking(value) {
+    onStartTracking(value: null) {
         BackgroundGeolocation.resetOdometer();
         BackgroundGeolocation.start((state) => {
             this.setState({
@@ -413,7 +413,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         AsyncStorage.setItem("@mmp:paused", 'false');
     }
 
-    onPauseTracking(value) {
+    onPauseTracking(value: any) {
         this.setState({
             enabled: false,
             paused: true,
@@ -428,7 +428,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         BackgroundGeolocation.stop();
     }
 
-    async onStopTracking(value) {
+    async onStopTracking(value: any) {
         this.setState({
             enabled: false,
             paused: false,
@@ -517,7 +517,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         AsyncStorage.setItem("@mmp:POIs", '');
     }
 
-    async uploadTrack(requestPayload) {
+    async uploadTrack(requestPayload: string) {
         try {
             let response = await fetch(MMP_URL_UPLOAD_COMPLETE_TRACK, {
                 method: 'POST',
@@ -540,11 +540,11 @@ export default class SimpleMap extends React.Component<Props, State> {
         }
     }
 
-    async sleep(milliseconds) {
+    async sleep(milliseconds: number | undefined) {
         return new Promise(resolve => setTimeout(resolve, milliseconds))
     }
 
-    async sendTrackGPXAsEmail(locations) {
+    async sendTrackGPXAsEmail(locations: string | any[]) {
         if (locations.length <= 0)
             return;
 
@@ -606,11 +606,11 @@ export default class SimpleMap extends React.Component<Props, State> {
         AsyncStorage.setItem("@mmp:POIs", '');
     }
 
-    padDateTimeElements(input) {
+    padDateTimeElements(input: { toString: () => string; }) {
         return ('0' + input.toString()).slice(-2);
     }
 
-    stringifyTime(timeInput) {
+    stringifyTime(timeInput: Date) {
         let timeString = timeInput.getUTCFullYear().toString() + '-' +
             this.padDateTimeElements(timeInput.getUTCMonth() + 1) + '-' +
             this.padDateTimeElements(timeInput.getUTCDate()) + ' ' +
@@ -620,7 +620,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         return timeString;
     }
 
-    addMarker(location) {
+    addMarker(location: { sample?: any; odometer?: number; coords: any; }) {
         if (location.coords.latitude == this.state.lastLat && location.coords.longitude == this.state.lastLong)
             return;
         this.setState({
@@ -656,7 +656,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         AsyncStorage.setItem("@mmp:old_tracks", oldTracksJson);
     }
 
-    loadLocationsFromStorage(locationsJson) {
+    loadLocationsFromStorage(locationsJson: string | null | undefined) {
         if (locationsJson) {
             let locations = JSON.parse(locationsJson).locations;
             if (locations)
@@ -666,7 +666,7 @@ export default class SimpleMap extends React.Component<Props, State> {
             this.setState({ coordinates: [] });
     }
 
-    loadOldTracksFromStorage(oldTracksJson) {
+    loadOldTracksFromStorage(oldTracksJson: string | null | undefined) {
         if (oldTracksJson) {
             let oldTracks = JSON.parse(oldTracksJson).old_tracks;
             if (oldTracks)
@@ -677,7 +677,7 @@ export default class SimpleMap extends React.Component<Props, State> {
     }
 
 
-    setCenter(location) {
+    setCenter(location: { sample?: any; odometer?: number; coords: any; }) {
         if (!this.refs.map) { return; }
 
         this.refs.map.animateToRegion({
@@ -689,7 +689,7 @@ export default class SimpleMap extends React.Component<Props, State> {
     }
 
     renderMarkers() {
-        let rs = [];
+        let rs: JSX.Element[] = [];
         this.state.markers.map((marker) => {
             rs.push((
                 <MapView.Marker
@@ -704,7 +704,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         return rs;
     }
 
-    async LoadJobData(jobId) {
+    async LoadJobData(jobId: number) {
         if (jobId == 0) {
             this.onGoToLocation();
             return;
@@ -774,11 +774,11 @@ export default class SimpleMap extends React.Component<Props, State> {
             });
     }
 
-    setModalVisible(visible) {
+    setModalVisible(visible: boolean) {
         this.setState({ modalVisible: visible });
     }
 
-    setPoisModalVisible(visible) {
+    setPoisModalVisible(visible: boolean) {
         this.setState({ poisModalVisible: visible });
     }
 
@@ -792,7 +792,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         }
 
         var trackIDs = this.state.trackIDs;
-        var tracks = [];
+        var tracks: { track_id: any; points: { latitude: any; longitude: any; }[]; }[] = [];
         for (var i = 0; i < trackIDs.length; i++) {
             var trackID = trackIDs[i];
             fetch('https://managemyapiclone.azurewebsites.net/Mobile.asmx/GetTrackSegments', {
@@ -898,7 +898,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         this.props.navigation.dispatch(resetAction);
     }
 
-    toHHMMSS(sec_num) {
+    toHHMMSS(sec_num: number) {
         if (sec_num == 0)
             return '';
         var hours = Math.floor(sec_num / 3600);
