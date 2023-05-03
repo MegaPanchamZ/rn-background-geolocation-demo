@@ -2,20 +2,10 @@ import React from 'react';
 import {
   Linking,
   Platform,
-  StyleSheet,
-  Text,
-  View
 } from 'react-native';
 
-import {
-  Button,
-  Icon,
-} from 'react-native-elements'
-
-import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
-import {HeaderBackButton} from '@react-navigation/elements';
 
 import HomeApp from "./src/home/HomeApp";
 import HelloWorldApp from "./src/hello-world/HelloWorldApp";
@@ -28,7 +18,7 @@ const NAVIGATION_KEY = "@transistorsoft:navigation";
 const MainStack = createNativeStackNavigator();
 
 // Custom back-button.  react-navigation does something messed up with default goBack() action.
-const screenOptions = ({ navigation }) => {
+const screenOptions = () => {
 
   return {
     headerShown: false
@@ -79,7 +69,7 @@ const App = () => {
         initialRouteName="HomeApp"
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#fedd1e'
+            backgroundColor: '#ffffff'
           },
         }}>
         <MainStack.Screen
@@ -103,23 +93,5 @@ const App = () => {
     </NavigationContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    backgroundColor: '#fedd1e'
-  },
-  input: {
-    height: 40,
-    margin: 12,
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 10,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
-
 
 export default App;

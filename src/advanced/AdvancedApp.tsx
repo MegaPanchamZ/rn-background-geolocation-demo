@@ -31,7 +31,7 @@ const AdvancedApp = ({route, navigation}) => {
             onPress={() => {
               navigation.goBack()
             }}
-            icon={<Icon name='home-sharp' type='ionicon' /> }
+            icon={<Icon name='home-sharp' type='ionicon' tvParallaxProperties={undefined} /> }
           />
         )
       }}>
@@ -50,7 +50,7 @@ const AdvancedApp = ({route, navigation}) => {
             onPress={() => {
               navigation.goBack()
             }}
-            icon={<Icon name='close-sharp' type='ionicon' /> }
+            icon={<Icon name='close-sharp' type='ionicon' tvParallaxProperties={undefined} /> }
           />
         )
       })}>
