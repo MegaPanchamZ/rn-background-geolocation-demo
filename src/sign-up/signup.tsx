@@ -19,7 +19,7 @@ import { CommonActions } from '@react-navigation/native';
 import DeviceInfo from 'react-native-device-info';
 import * as RNLocalize from "react-native-localize";
 
-type State = {
+type MyState = {
     firstnameValue: string;
     lastnameValue: string;
     companyNameValue: string;
@@ -34,13 +34,13 @@ type State = {
     registerErrorMessage: string | null;
 };
 
-type Props = {
+type MyProps = {
     navigation: any; // NOTE: use NavigationProp type if available
 };
 
 
-export default class SignupScreen extends React.Component<Props, State> {
-    constructor(props: Props) {
+export default class SignupScreen extends React.Component<MyProps, MyState> {
+    constructor(props: MyProps) {
         var offset = (Platform.OS === 'android') ? -500 : 0;
         super(props);
         let navigation = props.navigation;
@@ -94,62 +94,61 @@ export default class SignupScreen extends React.Component<Props, State> {
         this.setState({ companyNameValue: text },
             () => this.doFormValidation());
     }
-
     onSignupPressButton = () => {
         console.log('State is: ' + JSON.stringify(this.state));
         this.setState({
             loggingIn: true,
             loginError: false,
             registerErrorMessage: null
-        });
+        });                          
 
         fetch('https://managemyapiclone.azurewebsites.net/Mobile.asmx/RegisterRequest', {
             method: 'POST',
             headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json; charset=utf-8;',
-                'Data-Type': 'json'
+              Accept: 'application/json',
+              'Content-Type': 'application/json; charset=utf-8;',
+              'Data-Type': 'json'
             },
             body: JSON.stringify({
-                username: this.state.usernameValue,
-                password: this.state.passwordValue,
-                device_id: DeviceInfo.getUniqueId(),
-                firstname: this.state.firstnameValue,
-                lastname: this.state.lastnameValue,
-                email: this.state.emailAddressValue,
-                company_name: this.state.companyNameValue,
-                country_code: RNLocalize.getLocales()[0].countryCode,
-                sp_id: "NSW",
-                tz_id: RNLocalize.getTimeZone()
+              username: this.state.usernameValue,
+              password: this.state.passwordValue,
+              device_id: DeviceInfo.getUniqueId(),
+              firstname: this.state.firstnameValue,
+              lastname: this.state.lastnameValue,
+              email: this.state.emailAddressValue,
+              company_name: this.state.companyNameValue,
+              country_code: "UK",
+              sp_id: "NSW",
+              tz_id: "UTC"
             }),
         })
-            .then((response) => response.json())
-            .then((responseJson) => {
-                if (responseJson.d.register_result == 0) {
-                    AsyncStorage.setItem('@mmp:first_name', this.state.firstnameValue);
-                    AsyncStorage.setItem('@mmp:auth_token', responseJson.d.auth_response.token);
-                    console.log("Auth token is " + responseJson.d.auth_response.token);
-                    AsyncStorage.setItem('@mmp:user_id', responseJson.d.auth_response.user.user_id.toString());
-                    AsyncStorage.setItem('mmp_username', this.state.usernameValue);
-                    AsyncStorage.setItem('mmp_password', this.state.passwordValue);
-                    this.onClickNavigate('RegistrationSuccess');
-                }
-                else {
-                    this.setState({
-                        loggingIn: false,
-                        loginError: true,
-                        registerErrorMessage: responseJson.d.register_message
-                    });
-                }
-            })
-            .catch((error) => {
-                console.error(error);
+        .then((response) => response.json())
+        .then((responseJson) => {
+            if(responseJson.d.register_result == 0) {
+                AsyncStorage.setItem('@mmp:first_name', this.state.firstnameValue);
+                AsyncStorage.setItem('@mmp:auth_token', responseJson.d.auth_response.token);
+                console.log("Auth token is " + responseJson.d.auth_response.token);
+                AsyncStorage.setItem('@mmp:user_id', responseJson.d.auth_response.user.user_id.toString());
+                AsyncStorage.setItem('mmp_username', this.state.usernameValue);
+                AsyncStorage.setItem('mmp_password', this.state.passwordValue);
+                this.onClickNavigate('RegistrationSuccess');    
+            }
+            else {
                 this.setState({
                     loggingIn: false,
                     loginError: true,
-                    registerErrorMessage: error
+                    registerErrorMessage: responseJson.d.register_message
                 });
-            });
+            }
+        })
+        .catch((error) =>{
+            console.error(error);
+            this.setState({
+                loggingIn: false,
+                loginError: true,
+                registerErrorMessage: error
+            });                          
+        });
     }
 
     onClickNavigate(routeName: string) {

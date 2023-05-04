@@ -4,9 +4,13 @@ import {
     StyleSheet,
     Text,
     View,
+    TextInput,
     TouchableOpacity,
+    TouchableHighlight,
     Image,
     ImageBackground,
+    ScrollView,
+    ActivityIndicator,
     Linking
 } from "react-native";
 
@@ -14,26 +18,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { CommonActions } from '@react-navigation/native';
 
-type State = {
-    usernameValue: string;
-    passwordValue: string;
-    token: string;
-    jobList: any;
-    jobListLoaded: boolean;
-    welcomeMessage: string;
+type MyProps = { navigation: any };
+
+type MyState = {
+    usernameValue: string,
+    passwordValue: string,
+    token: string,
+    jobList: any[],
+    jobListLoaded: boolean,
+    welcomeMessage: string
 };
 
-type Props = {
-    navigation: any; // NOTE: use NavigationProp type if available
-    registration: RegistrationSuccessProps;
-};
 
-interface RegistrationSuccessProps {
-    welcomeMessage: string;
-}
-
-export default class RegistrationSuccess extends React.Component<Props, State> {
-    constructor(props: Props ) {
+export default class RegistrationSuccess extends React.Component<MyProps, MyState> {
+    constructor(props: MyProps) {
         super(props);
         let navigation = props.navigation;
         this.state = {
@@ -65,20 +63,18 @@ export default class RegistrationSuccess extends React.Component<Props, State> {
     render() {
         return (
             <ImageBackground source={require('../../images/MMP.png')} style={styles.container}>
-                <View>
-                    <View style={styles.loginform}>
-                        <Text style={styles.h3}>
-                            {this.props.registration.welcomeMessage}
-                        </Text>
+                <View style={styles.loginform}>
+                    <Text style={styles.h3}>
+                        {this.state.welcomeMessage}
+                    </Text>
 
-                        <Text>
-                            Your registration was successful. <Text onPress={() => Linking.openURL("http://managemypost.com/support/")} style={{ color: '#00f' }}>Click here</Text> to get info about getting started with MMP, or press "OK" to start tracking.
-                        </Text>
+                    <Text>
+                        Your registration was successful. <Text onPress={() => Linking.openURL("http://managemypost.com/support/")} style={{ color: '#00f' }}>Click here</Text> to get info about getting started with MMP, or press "OK" to start tracking.
+                    </Text>
 
-                        <TouchableOpacity style={styles.loginbtn} onPress={() => this.onClickNavigate('SimpleMap')}>
-                            <Text style={styles.infotext}>OK</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity style={styles.loginbtn} onPress={() => this.onClickNavigate('SimpleMap')}>
+                        <Text style={styles.infotext}>OK</Text>
+                    </TouchableOpacity>
                 </View>
             </ImageBackground>
         );

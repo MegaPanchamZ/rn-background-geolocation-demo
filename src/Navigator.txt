@@ -17,12 +17,12 @@ import {
   StyleSheet
 } from 'react-native';
 
-import AsyncStorage from '@react-native-community/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { createAppContainer, createStackNavigator, StackActions, NavigationActions } from 'react-navigation';
 
-import Home from './home/Home';
-import HelloWorld from './hello-world/HelloWorld';
+import Home from './home/HomeApp';
+import HelloWorld from './hello-world/HelloWorldApp';
 import SimpleMap from './simple-map/SimpleMap';
 import AdvancedApp from './advanced/AdvancedApp';
 import LoginScreen from './loginscreen/loginscreen';

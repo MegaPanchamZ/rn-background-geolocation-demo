@@ -17,21 +17,19 @@ import { CommonActions } from '@react-navigation/native';
 
 import DeviceInfo from 'react-native-device-info';
 
-type State = {
-    usernameValue: string;
-    passwordValue: string;
-    token: string;
-    loggingIn: boolean;
-    loginError: boolean;
-    loginErrorMessage: string | null;
+type MyProps = { navigation: any };
+
+type MyState = {
+    usernameValue: string,
+    passwordValue: string,
+    token: string,
+    loggingIn: boolean,
+    loginError: boolean,
+    loginErrorMessage: string | null,
 };
 
-type Props = {
-    navigation: any; // NOTE: use NavigationProp type if available
-};
-
-export default class LoginScreen extends React.Component<Props, State> {
-    constructor(props: Props) {
+export default class LoginScreen extends React.Component<MyProps, MyState> {
+    constructor(props: MyProps) {
         super(props);
         this.state = {
             usernameValue: '',
@@ -49,14 +47,14 @@ export default class LoginScreen extends React.Component<Props, State> {
         AsyncStorage.setItem("@mmp:next_page", 'LoginScreen');
     }
 
-    changeusernameValue = (text: any) => {
+    changeusernameValue = (text: string) => {
         this.setState({ usernameValue: text });
-        //console.log('usernameValue: ' + this.state.usernameValue);
+        console.log('usernameValue: ' + this.state.usernameValue);
     }
 
-    changepasswordValue = (text: any) => {
+    changepasswordValue = (text: string) => {
         this.setState({ passwordValue: text });
-        //console.log('passwordValue: ' + this.state.passwordValue);
+        console.log('passwordValue: ' + this.state.passwordValue);
     }
 
     onLoginPressButton = () => {
@@ -79,7 +77,8 @@ export default class LoginScreen extends React.Component<Props, State> {
                 password: this.state.passwordValue,
                 device_id: DeviceInfo.getUniqueId()
             }),
-        }).then((response) => response.json())
+        })
+            .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.d.auth_result == 0) {
                     AsyncStorage.setItem('@mmp:auth_token', responseJson.d.token);

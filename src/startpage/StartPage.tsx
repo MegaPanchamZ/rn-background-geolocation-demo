@@ -13,26 +13,29 @@ import {
     ActivityIndicator
 } from "react-native";
 
-import AsyncStorage from '@react-native-community/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { NavigationActions, StackActions } from 'react-navigation';
-
-import {
-    Container,
-    StyleProvider
-    // Header, Footer, Title,
-    // Content,
-    // Left, Body, Right,
-    // Switch
-  } from 'native-base';
+import { CommonActions } from '@react-navigation/native';
 
 import { Button } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-export default class StartPage extends Component {
-    constructor(props) {
+type State = {
+    usernameValue: string;
+    passwordValue: string;
+    token: string;
+    jobList: Array<any>;
+    jobListLoaded: boolean;
+}
+
+interface Props {
+    navigation: any; // Replace `any` with the type of your navigation object
+}
+
+export default class StartPage extends Component<{}, State> {
+    constructor(props: Props) {
         super(props);
-        let navigation = props.navigation;
+        let navigation = (props as any).navigation;
         this.state = {
             usernameValue: '',
             passwordValue: '',
@@ -43,7 +46,7 @@ export default class StartPage extends Component {
     }
 
     async componentDidMount() {
-        AsyncStorage.getItem('mmp_username').then((value) => {this.setState({usernameValue: value.toString().toLowerCase()})});
+        AsyncStorage.getItem('mmp_username').then((value) => { this.setState({ usernameValue: value.toString().toLowerCase() }) });
 
         const onLoginPressButton = () => {
             this.onClickNavigate('SimpleMap');
@@ -52,7 +55,7 @@ export default class StartPage extends Component {
     }
 
     parseJobId(jobIdText) {
-        if(this.state.jobIdText != null && this.state.jobIdText.length > 0)
+        if (this.state.jobIdText != null && this.state.jobIdText.length > 0)
             return parseInt(this.state.jobIdText.replace(/[^0-9]/g, ''));
         else
             return 0;
@@ -69,15 +72,15 @@ export default class StartPage extends Component {
             await AsyncStorage.setItem("@mmp:job_id", "0");
             this.onClickNavigate('SimpleMap');
         }
-        catch(exception) {
+        catch (exception) {
         }
         this.onClickNavigate('SimpleMap');
     }
 
-    onClickNavigate(routeName) {
-       const navigateAction = NavigationActions.navigate({
-            routeName: routeName,
-            params: { username: this.state.username },
+    onClickNavigate(routeName: string) {
+        const navigateAction = CommonActions.navigate({
+            name: routeName,
+            params: { username: this.state.usernameValue },
         });
         this.props.navigation.dispatch(navigateAction);
     }
@@ -91,90 +94,90 @@ export default class StartPage extends Component {
         fetch('https://managemyapiclone.azurewebsites.net/Mobile.asmx/GetJobs', {
             method: 'POST',
             headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json; charset=utf-8;',
-              'Data-Type': 'json'
+                Accept: 'application/json',
+                'Content-Type': 'application/json; charset=utf-8;',
+                'Data-Type': 'json'
             },
             body: JSON.stringify({
-              token: auth_token,
-              user_id: user_id,
-              job_status: 0,
-              get_job_detail: 0
+                token: auth_token,
+                user_id: user_id,
+                job_status: 0,
+                get_job_detail: 0
             }),
         })
-        .then((response) => response.json())
-        .then((responseJson) => {
-            var eligibleJobs = [];
-            for(var i = 0; i < responseJson.d.length; i++)
-                if(responseJson.d[i].job_status !== 3)
-                    eligibleJobs.push(responseJson.d[i]);
-            this.setState({jobList: eligibleJobs});
-        })
-        .catch((error) =>{
-            console.log("Error loading jobs");
-            console.error(error);
-        });
+            .then((response) => response.json())
+            .then((responseJson) => {
+                var eligibleJobs = [];
+                for (var i = 0; i < responseJson.d.length; i++)
+                    if (responseJson.d[i].job_status !== 3)
+                        eligibleJobs.push(responseJson.d[i]);
+                this.setState({ jobList: eligibleJobs });
+            })
+            .catch((error) => {
+                console.log("Error loading jobs");
+                console.error(error);
+            });
     }
 
-render() {
-    return (
-        <ImageBackground style={styles.container}>
+    render() {
+        return (
+            <ImageBackground style={styles.container}>
 
-            <ScrollView style={styles.scrollview}>
+                <ScrollView style={styles.scrollview}>
 
-                <Button
-                    buttonStyle={{backgroundColor: 'orange', borderRadius: 10, margin: 10}}
-                    title='Select a job from list' onPress={this.LoadJobs.bind(this)} disabled={this.state.jobList.length !== 0}
-                >
-                </ Button>
-
-                {this.state.jobList.map((job) => (
                     <Button
-                    key={job.job_id}
-                    buttonStyle={{backgroundColor: 'orange', borderRadius: 10, margin: 10}}
-                    title={"Load job #" + job.job_id.toString()} onPress={() => this.onClickGoToJob(job.job_id)}
+                        buttonStyle={{ backgroundColor: 'orange', borderRadius: 10, margin: 10 }}
+                        title='Select a job from list' onPress={this.LoadJobs.bind(this)} disabled={this.state.jobList.length !== 0}
                     >
-                    </ Button>))
-                }
+                    </ Button>
 
-                <View style={{flexDirection:"row"}}>
-                    <View style={{flex:1}}>
-                        <TextInput
-                        style={styles.textinput}
-                        keyboardType='numeric'
-                        multiline={false}
-                        underlineColorAndroid="transparent"
-                        onChangeText={(text) => this.setState({jobIdText: text})}
-                        value={this.state.jobIdText}
-                        placeholder = 'Enter a job ID'
-                        />
-                    </View>
-                    <View style={{flex:1}}>
+                    {this.state.jobList.map((job) => (
                         <Button
-                        key={0}
-                        buttonStyle={{backgroundColor: 'orange', borderRadius: 10, margin: 10}}
-                        title={"Load"} onPress={() => this.onClickGoToJob(this.parseJobId(this.state.jobIdText))}
+                            key={job.job_id}
+                            buttonStyle={{ backgroundColor: 'orange', borderRadius: 10, margin: 10 }}
+                            title={"Load job #" + job.job_id.toString()} onPress={() => this.onClickGoToJob(job.job_id)}
                         >
-                        </ Button>
+                        </ Button>))
+                    }
+
+                    <View style={{ flexDirection: "row" }}>
+                        <View style={{ flex: 1 }}>
+                            <TextInput
+                                style={styles.textinput}
+                                keyboardType='numeric'
+                                multiline={false}
+                                underlineColorAndroid="transparent"
+                                onChangeText={(text) => this.setState({ jobIdText: text })}
+                                value={this.state.jobIdText}
+                                placeholder='Enter a job ID'
+                            />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Button
+                                key={0}
+                                buttonStyle={{ backgroundColor: 'orange', borderRadius: 10, margin: 10 }}
+                                title={"Load"} onPress={() => this.onClickGoToJob(this.parseJobId(this.state.jobIdText))}
+                            >
+                            </ Button>
+                        </View>
                     </View>
-                </View>
 
-                <Button
-                    buttonStyle={{backgroundColor: 'orange', borderRadius: 10, margin: 10}}
-                    title='Just start tracking' onPress={() => this.onClickGoToEmptyMap()}
-                >
-                </ Button>
-                {/* <Text style={{pading:5}}>(You'll be able to assign your track to an MMP job later)</Text> */}
-                <Button
-                    buttonStyle={{backgroundColor: 'red', borderRadius: 10, margin: 10}}
-                    title='Log out' onPress={() => this.onClickNavigate('LoginScreen')}
-                >
-                </ Button>
+                    <Button
+                        buttonStyle={{ backgroundColor: 'orange', borderRadius: 10, margin: 10 }}
+                        title='Just start tracking' onPress={() => this.onClickGoToEmptyMap()}
+                    >
+                    </ Button>
+                    {/* <Text style={{pading:5}}>(You'll be able to assign your track to an MMP job later)</Text> */}
+                    <Button
+                        buttonStyle={{ backgroundColor: 'red', borderRadius: 10, margin: 10 }}
+                        title='Log out' onPress={() => this.onClickNavigate('LoginScreen')}
+                    >
+                    </ Button>
 
-            </ScrollView>
-        </ ImageBackground>
-    );
-  }
+                </ScrollView>
+            </ ImageBackground>
+        );
+    }
 }
 
 const styles = StyleSheet.create({

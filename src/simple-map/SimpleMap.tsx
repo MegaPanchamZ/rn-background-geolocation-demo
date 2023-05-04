@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
 import {
+    Platform,
     StyleSheet,
     View,
+    TouchableHighlight,
     Modal,
     TextInput,
     ScrollView,
     KeyboardAvoidingView,
+    Image,
     PermissionsAndroid
 } from 'react-native';
 
@@ -30,54 +33,54 @@ import {
 import MapView, { Polyline } from 'react-native-maps';
 import { PROVIDER_GOOGLE } from 'react-native-maps';
 
-import BackgroundGeolocation from "react-native-background-geolocation";
-import ConsentModal from "../advanced/ConsentModal";
+import BackgroundGeolocation from '../react-native-background-geolocation';
 
 const LATITUDE_DELTA = 0.00922;
 const LONGITUDE_DELTA = 0.00421;
 
+const TRACKER_HOST = 'http://tracker.transistorsoft.com/locations/';
+
 const MMP_URL_UPLOAD_COMPLETE_TRACK = 'https://managemyapiclone.azurewebsites.net/Mobile.asmx/UploadCompleteTrackWithPOIsToJob'
 const COORDINATES_BUFFER_LENGTH = 2;
 
-type State = {
-    enabled: boolean;
-    paused: boolean;
-    isMoving: boolean;
-    motionActivity: any;
-    username: string;
+type MyProps = { navigation: any };
+
+type MyState = {
+    enabled: boolean,
+    paused: boolean,
+    isMoving: boolean | undefined,
+    motionActivity: any,
+    username: string,
     // MapView
-    markers: any[];
-    coordinates: any[];
-    unreportedCoordinates: any[];
-    jobPolygons: any[];
-    jobPolygonsCoordinates: any[];
-    trackIDs: any[];
-    tracks: any[];
-    showsUserLocation: boolean;
-    statusMessage: string;
-    isFollowingUser: boolean;
-    modalVisible: boolean;
-    poisModalVisible: boolean;
-    odometer: number;
-    speed: number;
-    averageSpeed: number;
-    maxSpeed: number;
-    trackStartTime: number;
-    trackTimeStr: string;
-    textForPOI: string;
-    oldTracks: any[];
-    lastLat: number;
-    lastLong: number;
-    photoModalVisible: boolean;
-    photos: any[];
+    markers: any[],
+    coordinates: any[],
+    unreportedCoordinates: any[],
+    jobPolygons: any[],
+    jobPolygonsCoordinates: any[],
+    trackIDs: any[],
+    tracks: any[],
+    showsUserLocation: boolean,
+    statusMessage: string,
+    isFollowingUser: boolean,
+    modalVisible: boolean,
+    poisModalVisible: boolean,
+    odometer: number,
+    speed: number,
+    averageSpeed: number,
+    maxSpeed: number,
+    trackStartTime: number,
+    trackTimeStr: string,
+    textForPOI: string,
+    oldTracks: any[],
+    lastLat: number,
+    lastLong: number,
+    photoModalVisible: boolean,
+    photos: any[]
 };
 
-type Props = {
-    navigation: any; // NOTE: use NavigationProp type if available
-};
 
-export default class SimpleMap extends React.Component<Props, State> {
-    constructor(props: Props) {
+export default class SimpleMap extends Component<MyProps, MyState> {
+    constructor(props: MyProps) {
         super(props);
 
         this.state = {
@@ -116,27 +119,6 @@ export default class SimpleMap extends React.Component<Props, State> {
     }
 
     async componentDidMount() {
-        this.showConsent();
-    }
-    showConsent = () => {
-        this.showStatus().then(item => {
-            if (item) {
-                this.setUpBackgroundLocation()
-            } else {
-                this.consentModal.show(() => {
-                    AsyncStorage.setItem("consent", 'true')
-                    this.setUpBackgroundLocation()
-                })
-            }
-        }).catch(error => {
-            this.setUpBackgroundLocation()
-        })
-    }
-    showStatus = async () => {
-        return await AsyncStorage.getItem("consent")
-    }
-
-    setUpBackgroundLocation = async () => {
         // Step 1:  Listen to events:
         BackgroundGeolocation.on('location', this.onLocation.bind(this));
         BackgroundGeolocation.on('motionchange', this.onMotionChange.bind(this));
@@ -153,13 +135,6 @@ export default class SimpleMap extends React.Component<Props, State> {
             fastestLocationUpdateInterval: 3000,
             notificationText: "",
             allowIdenticalLocations: true,
-            locationAuthorizationRequest: 'Always',
-            backgroundPermissionRationale: {
-                title: "Allow MMP Tracker to access this device's location even when closed or not in use.",
-                message: "MMP Tracker collects location data to enable recording your work tracks and verify that your job's area is covered by them.",
-                positiveAction: 'Allow background location access"',
-                negativeAction: 'Cancel'
-            },
             params: {
                 // Required for tracker.transistorsoft.com
                 device: {
@@ -180,6 +155,7 @@ export default class SimpleMap extends React.Component<Props, State> {
             heartbeatInterval: 60,
             forceReloadOnHeartbeat: true,
             minimumActivityRecognitionConfidence: 50,
+
             debug: false,
             logLevel: BackgroundGeolocation.LOG_LEVEL_OFF,
         }, (state) => {
@@ -217,13 +193,7 @@ export default class SimpleMap extends React.Component<Props, State> {
                 fastestLocationUpdateInterval: 3000,
                 notificationText: "",
                 allowIdenticalLocations: true,
-                locationAuthorizationRequest: 'Always',
-                backgroundPermissionRationale: {
-                    title: "Allow MMP Tracker to access this device's location even when closed or not in use.",
-                    message: "MMP Tracker collects location data to enable recording your work tracks and verify that your job's area is covered by them.",
-                    positiveAction: 'Allow background location access"',
-                    negativeAction: 'Cancel'
-                },
+
                 stopOnTerminate: false,
                 startOnBoot: true,
                 foregroundService: true,
@@ -240,7 +210,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         });
 
         try {
-            AsyncStorage.getItem('@mmp:job_id', (err, item) => {
+            await AsyncStorage.getItem('@mmp:job_id', (err, item) => {
                 this.setState({
                     jobPolygons: [],
                     jobPolygonsCoordinates: []
@@ -270,7 +240,7 @@ export default class SimpleMap extends React.Component<Props, State> {
                             body: JSON.stringify({
                                 username: mmp_username,
                                 password: mmp_password,
-                                device_id: DeviceInfo.getUniqueId()
+                                device_id: DeviceInfo.getUniqueID()
                             }),
                         })
                             .then((response) => response.json())
@@ -291,8 +261,8 @@ export default class SimpleMap extends React.Component<Props, State> {
             });
     }
 
-    onClickNavigate(routeName: string) {
-        const navigateAction = NavigationActions.navigate({
+    onClickNavigate(routeName) {
+        navigateAction = NavigationActions.navigate({
             routeName: routeName,
             params: { username: this.state.username },
         });
@@ -302,7 +272,7 @@ export default class SimpleMap extends React.Component<Props, State> {
 
     /**
     * @event location;
-    *
+    * 
     */
     onLocation(location) {
         if (!location.sample) {
@@ -324,7 +294,7 @@ export default class SimpleMap extends React.Component<Props, State> {
     /**
     * @event motionchange
     */
-    onMotionChange(event: { isMoving: any; location: any; }) {
+    onMotionChange(event) {
         this.setState({
             isMoving: event.isMoving
         });
@@ -333,7 +303,7 @@ export default class SimpleMap extends React.Component<Props, State> {
     /**
     * @event activitychange
     */
-    onActivityChange(event: any) {
+    onActivityChange(event) {
         this.setState({
             motionActivity: event
         });
@@ -341,28 +311,28 @@ export default class SimpleMap extends React.Component<Props, State> {
     /**
     * @event providerchange
     */
-    onProviderChange(event: any) {
+    onProviderChange(event) {
     }
     /**
     * @event powersavechange
     */
-    onPowerSaveChange(isPowerSaveMode: any) {
+    onPowerSaveChange(isPowerSaveMode) {
     }
 
-    onEnteredPOI(newPOIName: string) {
+    onEnteredPOI(newPOIName) {
         AsyncStorage.getItem('@mmp:POIs', (err, item) => this.addPOIToStorage(item, this.state.lastKnownLocation, newPOIName));
         let markers = this.state.markers;
         markers.push({ label: newPOIName, coordinate: this.state.lastKnownLocation.coords });
         this.setState({ markers: markers });
     }
 
-    addPOIToStorage(existingPOIsString: string | any[] | null | undefined, newPOIPosition: { coords: { latitude: { toString: () => string; }; longitude: { toString: () => string; }; }; }, newPOIName: string) {
+    addPOIToStorage(existingPOIsString, newPOIPosition, newPOIName) {
         var timestampFormatted = '2000-01-01 00:00:00';
         if (existingPOIsString == null || existingPOIsString.length == 0 || existingPOIsString == 'null')
             existingPOIsString = '';
         if (existingPOIsString.length > 0)
             existingPOIsString += ',\n'
-        const newPOIsString = existingPOIsString + '{"Latitude":"' + newPOIPosition.coords.latitude.toString() + '","Longitude":"' + newPOIPosition.coords.longitude.toString() + '","Timestamp":"' + timestampFormatted + '", "Name": "' + newPOIName + '"}';
+        newPOIsString = existingPOIsString + '{"Latitude":"' + newPOIPosition.coords.latitude.toString() + '","Longitude":"' + newPOIPosition.coords.longitude.toString() + '","Timestamp":"' + timestampFormatted + '", "Name": "' + newPOIName + '"}';
         AsyncStorage.setItem("@mmp:POIs", newPOIsString);
     }
 
@@ -384,7 +354,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         );
     }
 
-    onStartTracking(value: null) {
+    onStartTracking(value) {
         BackgroundGeolocation.resetOdometer();
         BackgroundGeolocation.start((state) => {
             this.setState({
@@ -413,7 +383,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         AsyncStorage.setItem("@mmp:paused", 'false');
     }
 
-    onPauseTracking(value: any) {
+    onPauseTracking(value) {
         this.setState({
             enabled: false,
             paused: true,
@@ -428,7 +398,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         BackgroundGeolocation.stop();
     }
 
-    async onStopTracking(value: any) {
+    async onStopTracking(value) {
         this.setState({
             enabled: false,
             paused: false,
@@ -481,70 +451,45 @@ export default class SimpleMap extends React.Component<Props, State> {
             trackPOIs: POIsJSON,
         });
 
-        var numOfTries = 3;
-        this.setState({
-            trackUploadedSuccessfully: false,
-        });
-        while (numOfTries > 0) {
-            await this.uploadTrack(requestPayload);
-            if (this.state.trackUploadedSuccessfully) {
-                numOfTries = 0;
+        fetch(MMP_URL_UPLOAD_COMPLETE_TRACK, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json; charset=utf-8;',
+                'Data-Type': 'json'
+            },
+            body: requestPayload,
+        })
+            .then((response) => response.json())
+            .then((responseJson) => {
+                let previousOldTracks = this.state.oldTracks;
+                if ('d' in responseJson && responseJson.d.result == 0) {
+                    previousOldTracks.push(this.state.coordinates);
+                    this.setState({
+                        statusMessage: locationsFormatted.length.toString() + ' points uploaded to job #' + jobId.toString(),
+                    });
+                }
+                else {
+                    this.setState({
+                        statusMessage: 'Error (will email GPX file)',
+                    });
+                    this.sendTrackGPXAsEmail(locations);
+                }
+                BackgroundGeolocation.destroyLocations();
                 this.setState({
-                    statusMessage: locationsFormatted.length.toString() + ' points uploaded to job #' + jobId.toString(),
+                    oldTracks: previousOldTracks,
+                    coordinates: [],
+                    unreportedCoordinates: []
                 });
-                break;
-            }
-            else {
-                numOfTries--;
-                await this.sleep(2000);
-            }
-        }
-        if (!this.state.trackUploadedSuccessfully) {
-            this.setState({
-                statusMessage: 'Error (will email GPX file)',
+                AsyncStorage.setItem("@mmp:locations", '{"locations": []}');
+                AsyncStorage.setItem("@mmp:POIs", '');
+            })
+            .catch((error) => {
+                console.error(error);
             });
-            await this.sendTrackGPXAsEmail(locations);
-        }
-        let previousOldTracks = this.state.oldTracks;
-        previousOldTracks.push(this.state.coordinates);
-        BackgroundGeolocation.destroyLocations();
-        this.setState({
-            oldTracks: previousOldTracks,
-            coordinates: [],
-            unreportedCoordinates: []
-        });
-        AsyncStorage.setItem("@mmp:locations", '{"locations": []}');
-        AsyncStorage.setItem("@mmp:POIs", '');
     }
 
-    async uploadTrack(requestPayload: string) {
-        try {
-            let response = await fetch(MMP_URL_UPLOAD_COMPLETE_TRACK, {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json; charset=utf-8;',
-                    'Data-Type': 'json'
-                },
-                body: requestPayload,
-            });
-            let responseJson = await response.json();
-            if ('d' in responseJson && responseJson.d.result == 0) {
-                this.setState({
-                    trackUploadedSuccessfully: true,
-                });
-            }
-        }
-        catch (error) {
-            console.error(error);
-        }
-    }
-
-    async sleep(milliseconds: number | undefined) {
-        return new Promise(resolve => setTimeout(resolve, milliseconds))
-    }
-
-    async sendTrackGPXAsEmail(locations: string | any[]) {
+    async sendTrackGPXAsEmail(locations) {
         if (locations.length <= 0)
             return;
 
@@ -606,11 +551,11 @@ export default class SimpleMap extends React.Component<Props, State> {
         AsyncStorage.setItem("@mmp:POIs", '');
     }
 
-    padDateTimeElements(input: { toString: () => string; }) {
+    padDateTimeElements(input) {
         return ('0' + input.toString()).slice(-2);
     }
 
-    stringifyTime(timeInput: Date) {
+    stringifyTime(timeInput) {
         let timeString = timeInput.getUTCFullYear().toString() + '-' +
             this.padDateTimeElements(timeInput.getUTCMonth() + 1) + '-' +
             this.padDateTimeElements(timeInput.getUTCDate()) + ' ' +
@@ -620,7 +565,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         return timeString;
     }
 
-    addMarker(location: { sample?: any; odometer?: number; coords: any; }) {
+    addMarker(location) {
         if (location.coords.latitude == this.state.lastLat && location.coords.longitude == this.state.lastLong)
             return;
         this.setState({
@@ -656,7 +601,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         AsyncStorage.setItem("@mmp:old_tracks", oldTracksJson);
     }
 
-    loadLocationsFromStorage(locationsJson: string | null | undefined) {
+    loadLocationsFromStorage(locationsJson) {
         if (locationsJson) {
             let locations = JSON.parse(locationsJson).locations;
             if (locations)
@@ -666,7 +611,7 @@ export default class SimpleMap extends React.Component<Props, State> {
             this.setState({ coordinates: [] });
     }
 
-    loadOldTracksFromStorage(oldTracksJson: string | null | undefined) {
+    loadOldTracksFromStorage(oldTracksJson) {
         if (oldTracksJson) {
             let oldTracks = JSON.parse(oldTracksJson).old_tracks;
             if (oldTracks)
@@ -677,7 +622,7 @@ export default class SimpleMap extends React.Component<Props, State> {
     }
 
 
-    setCenter(location: { sample?: any; odometer?: number; coords: any; }) {
+    setCenter(location) {
         if (!this.refs.map) { return; }
 
         this.refs.map.animateToRegion({
@@ -689,7 +634,7 @@ export default class SimpleMap extends React.Component<Props, State> {
     }
 
     renderMarkers() {
-        let rs: JSX.Element[] = [];
+        let rs = [];
         this.state.markers.map((marker) => {
             rs.push((
                 <MapView.Marker
@@ -704,7 +649,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         return rs;
     }
 
-    async LoadJobData(jobId: number) {
+    async LoadJobData(jobId) {
         if (jobId == 0) {
             this.onGoToLocation();
             return;
@@ -748,7 +693,7 @@ export default class SimpleMap extends React.Component<Props, State> {
                     points = [];
                 }
 
-                const trackIDs = [];
+                trackIDs = [];
                 for (var i = 0; i < responseJson.d.tracks.length; i++) {
                     trackIDs.push(parseInt(responseJson.d.tracks[i].track_id, 10));
                 }
@@ -774,11 +719,11 @@ export default class SimpleMap extends React.Component<Props, State> {
             });
     }
 
-    setModalVisible(visible: boolean) {
+    setModalVisible(visible) {
         this.setState({ modalVisible: visible });
     }
 
-    setPoisModalVisible(visible: boolean) {
+    setPoisModalVisible(visible) {
         this.setState({ poisModalVisible: visible });
     }
 
@@ -792,7 +737,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         }
 
         var trackIDs = this.state.trackIDs;
-        var tracks: { track_id: any; points: { latitude: any; longitude: any; }[]; }[] = [];
+        var tracks = [];
         for (var i = 0; i < trackIDs.length; i++) {
             var trackID = trackIDs[i];
             fetch('https://managemyapiclone.azurewebsites.net/Mobile.asmx/GetTrackSegments', {
@@ -831,7 +776,7 @@ export default class SimpleMap extends React.Component<Props, State> {
         var geom_str = '';
         var i = 0;
         while (true) {
-            const currentPolygon = polygons[i].points;
+            currentPolygon = polygons[i].points;
             var j = 0;
             geom_str += '(';
             while (true) {
@@ -898,18 +843,18 @@ export default class SimpleMap extends React.Component<Props, State> {
         this.props.navigation.dispatch(resetAction);
     }
 
-    toHHMMSS(sec_num: number) {
+    toHHMMSS(sec_num) {
         if (sec_num == 0)
             return '';
         var hours = Math.floor(sec_num / 3600);
         var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
         var seconds = Math.floor(sec_num - (hours * 3600) - (minutes * 60));
 
-        let hoursStr = hours.toString();
+        hoursStr = hours.toString();
         if (hours < 10) { hoursStr = "0" + hoursStr; }
-        let minutesStr = minutes.toString();
+        minutesStr = minutes.toString();
         if (minutes < 10) { minutesStr = "0" + minutesStr; }
-        let secondsStr = seconds.toString();
+        secondsStr = seconds.toString();
         if (seconds < 10) { secondsStr = "0" + secondsStr; }
         return hoursStr + ':' + minutesStr + ':' + secondsStr;
     }
@@ -935,7 +880,7 @@ export default class SimpleMap extends React.Component<Props, State> {
                     console.log("Photos: photos loaded");
                     this.setState({ photos: photos, photoModalVisible: true, poisModalVisible: false });
                 })
-                .catch((err: { toString: () => string; }) => {
+                .catch((err) => {
                     console.log("Photos: error encountered - " + err.toString());
                 });
         }
@@ -947,7 +892,6 @@ export default class SimpleMap extends React.Component<Props, State> {
     render() {
         return (
             <Container style={styles.container}>
-                <ConsentModal ref={ref => this.consentModal = ref} />
                 <View style={styles.viewincontainer}>
                     <Button onPress={() => this.setModalVisible(!this.state.modalVisible)} style={{ zIndex: 100, backgroundColor: 'rgba(255, 255, 255, 0.8)', position: 'absolute', top: 25, left: 5 }}>
                         <Icon name='md-stats' style={{ color: 'orange', backgroundColor: 'transparent' }} />
@@ -994,6 +938,14 @@ export default class SimpleMap extends React.Component<Props, State> {
                             />
                         ))}
 
+                        {/* {this.state.missedAddresses.map((address, index) => (
+              <Marker
+                key={'address' + index}
+                coordinate={address.coordinate}
+                anchor={{x:0, y:0.1}}>
+              </Marker>))
+            } */}
+
                         {this.state.markers.map((marker, index) => (
                             <MapView.Marker
                                 key={'POI' + index}
@@ -1013,6 +965,31 @@ export default class SimpleMap extends React.Component<Props, State> {
                             />
                         ))}
                     </MapView>
+
+                    {/* <Modal
+            animationType="slide"
+            transparent={true}
+            visible={this.state.photoModalVisible}
+            onRequestClose={() => {
+              Alert.alert('Modal has been closed.');
+            }}>
+            <View style={{marginTop: 50, marginBottom: 120, marginLeft: 20, marginRight: 20, backgroundColor: 'rgba(255, 255, 255, 0.8)'}}>
+              <ScrollView>
+                {this.state.photos.map((p, i) => {
+                  return (
+                    <Image
+                      key={i}
+                      // style={{
+                      //   width: 300,
+                      //   height: 100,
+                      // }}
+                      source={{ uri: p.node.image.uri }}
+                    />
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </Modal> */}
 
                     <Modal
                         animationType="slide"
@@ -1100,30 +1077,34 @@ export default class SimpleMap extends React.Component<Props, State> {
                         </View>
                     </Modal>
                 </View>
-                <HStack style={styles.btnbackground}>
-                    <Button onPress={this.onStartTracking.bind(this)} disabled={this.state.enabled} style={styles.btn}>
-                        <Icon name='md-play' style={this.state.enabled ? styles.btnicondisabled : styles.btnicon} />
-                    </Button>
-                    <Button onPress={this.onPauseTracking.bind(this)} disabled={!this.state.enabled || this.state.paused} style={styles.btn}>
-                        <Icon name='md-pause' style={!this.state.enabled || this.state.paused ? styles.btnicondisabled : styles.btnicon} />
-                    </Button>
-                    <Button onPress={this.onStopTracking.bind(this)} disabled={!this.state.enabled && !this.state.paused} style={styles.btn}>
-                        <Icon type='MaterialIcons' name='stop' style={!this.state.enabled && !this.state.paused ? styles.btnicondisabled : styles.btnicon} />
-                    </Button>
-                    <Button onPress={this.onResetMarkers.bind(this)} disabled={this.state.enabled || (this.state.coordinates.length == 0 && this.state.oldTracks.length == 0)} style={styles.btn}>
-                        <Icon name='md-refresh' style={this.state.enabled || (this.state.coordinates.length == 0 && this.state.oldTracks.length == 0) ? styles.btnicondisabled : styles.btnicon} />
-                    </Button>
-                    <Button onPress={this.onGoToLocation.bind(this)} style={styles.btn}>
-                        <Icon name='md-locate' style={this.state.isFollowingUser ? styles.btnicondisabled : styles.btnicon} />
-                    </Button>
-
-                    <Button onPress={() => this.goToStartPage()} style={styles.btn}>
-                        <Icon name='md-exit' style={styles.logoutbtnicon} />
-                    </Button>
-                </HStack>
-                <HStack style={styles.footer}>
+                <Footer style={styles.btnbackground}>
+                    <FooterTab>
+                        <Button onPress={this.onStartTracking.bind(this)} disabled={this.state.enabled} style={styles.btn}>
+                            <Icon name='md-play' style={this.state.enabled ? styles.btnicondisabled : styles.btnicon} />
+                        </Button>
+                        <Button onPress={this.onPauseTracking.bind(this)} disabled={!this.state.enabled || this.state.paused} style={styles.btn}>
+                            <Icon name='md-pause' style={!this.state.enabled || this.state.paused ? styles.btnicondisabled : styles.btnicon} />
+                        </Button>
+                        <Button onPress={this.onStopTracking.bind(this)} disabled={!this.state.enabled && !this.state.paused} style={styles.btn}>
+                            <Icon type='MaterialIcons' name='stop' style={!this.state.enabled && !this.state.paused ? styles.btnicondisabled : styles.btnicon} />
+                        </Button>
+                        <Button onPress={this.onResetMarkers.bind(this)} disabled={this.state.enabled || (this.state.coordinates.length == 0 && this.state.oldTracks.length == 0)} style={styles.btn}>
+                            <Icon name='md-refresh' style={this.state.enabled || (this.state.coordinates.length == 0 && this.state.oldTracks.length == 0) ? styles.btnicondisabled : styles.btnicon} />
+                        </Button>
+                        <Button onPress={this.onGoToLocation.bind(this)} style={styles.btn}>
+                            <Icon name='md-locate' style={this.state.isFollowingUser ? styles.btnicondisabled : styles.btnicon} />
+                        </Button>
+                        {/* <Button onPress={this.ToggleLoadJobMissedAddresses.bind(this)} style={styles.btn}>
+              <Icon name='md-alert' style={this.state.missedAddressesLoaded ? styles.btnicon: styles.btnicondisabled}/>
+            </Button> */}
+                        <Button onPress={() => this.goToStartPage()} style={styles.btn}>
+                            <Icon name='md-exit' style={styles.logoutbtnicon} />
+                        </Button>
+                    </FooterTab>
+                </Footer>
+                <Footer style={styles.footer}>
                     <Text style={styles.footertext}>{this.state.statusMessage}</Text>
-                </HStack>
+                </Footer>
             </Container>
         );
     }
