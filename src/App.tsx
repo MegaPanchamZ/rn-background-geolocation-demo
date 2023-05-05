@@ -12,7 +12,7 @@ export default class App extends Component {
     /**
     * Helper method for resetting the router to Home screen
     */
-    static goHome(navigation: { state: { params: any; }; dispatch: (arg0: CommonActions.Action) => void; }) {
+    static goHome({navigation}) {
         AsyncStorage.setItem("@transistorsoft:initialRouteName", 'LoginScreen');
         const resetAction = CommonActions.reset({
             index: 0,
