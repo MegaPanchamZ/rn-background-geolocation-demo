@@ -12,7 +12,7 @@ export default class App extends Component {
     /**
     * Helper method for resetting the router to Home screen
     */
-    static goHome(navigation) {
+    static goHome(navigation: { state: { params: any; }; dispatch: (arg0: CommonActions.Action) => void; }) {
         AsyncStorage.setItem("@transistorsoft:initialRouteName", 'LoginScreen');
         const resetAction = CommonActions.reset({
             index: 0,
@@ -23,7 +23,7 @@ export default class App extends Component {
         navigation.dispatch(resetAction);
     }
 
-    static setRootRoute(routeName) {
+    static setRootRoute(routeName: string) {
         AsyncStorage.setItem("@transistorsoft:initialRouteName", routeName);
     }
 
@@ -36,7 +36,7 @@ export default class App extends Component {
                 />
                 <Navigator
                     initialRoute={{ statusBarHidden: true }}
-                    renderScene={(route, navigator) =>
+                    renderScene={(route: { statusBarHidden: boolean | undefined; }, navigator: any) =>
                         <View>
                             <StatusBar hidden={route.statusBarHidden} />
                         </View>
